@@ -43,6 +43,10 @@ jobs:
       - name: Install cargo-ndk
         run: cargo install cargo-ndk --locked
 
+      - name: Test Bedrock exporter
+        working-directory: android/native
+        run: cargo test --release
+
       - name: Build Bedrock native exporter
         working-directory: android/native
         run: cargo ndk -t arm64-v8a -P 26 -o ../app/src/main/jniLibs build --release

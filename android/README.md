@@ -30,7 +30,7 @@ For a local build, install Android SDK 36, Android NDK 27.2.12479018, Rust, and 
 
 \`\`\`bash
 cd android/native
-cargo ndk -t arm64-v8a -p 26 -o ../app/src/main/jniLibs build --release
+cargo ndk -t arm64-v8a -P 26 -o ../app/src/main/jniLibs build --release
 cd ..
 gradle :app:assembleDebug
 \`\`\`

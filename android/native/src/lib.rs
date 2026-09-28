@@ -611,10 +611,6 @@ mod tests {
             .expect("FinalizedState record");
         assert_eq!(&*finalized, &2i32.to_le_bytes());
 
-        assert!(
-            db.get(&subchunk_key(0, 0, 4))
-                .expect("read subchunk key")
-                .is_some()
-        );
+        assert!(db.get(&subchunk_key(0, 0, 4)).is_some());
     }
 }

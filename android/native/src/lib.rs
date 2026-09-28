@@ -561,3 +561,60 @@ fn bedrock_compressor_list() -> Rc<CompressorList> {
     list.set_with_id(RAW_DEFLATE_ID, RawDeflateCompressor);
     Rc::new(list)
 }
+
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+
+    #[test]
+    fn exports_reopenable_bedrock_leveldb() {
+        let temp = tempfile::tempdir().expect("tempdir");
+        let width = 16usize;
+        let depth = 16usize;
+        let heights = vec![64i32; width * depth];
+        let materials = vec![0u8; width * depth];
+        let water = vec![0u8; width * depth];
+
+        export_world(
+            temp.path(),
+            "WorldPainter test",
+            width,
+            depth,
+            62,
+            &heights,
+            &materials,
+            &water,
+        )
+        .expect("world export");
+
+        let level_dat = fs::read(temp.path().join("level.dat")).expect("level.dat");
+        assert!(level_dat.len() > 8);
+        assert_eq!(u32::from_le_bytes(level_dat[0..4].try_into().unwrap()), 10);
+        assert!(temp.path().join("levelname.txt").is_file());
+        assert!(temp.path().join("db").join("CURRENT").is_file());
+
+        let options = Options {
+            create_if_missing: false,
+            compressor_list: bedrock_compressor_list(),
+            ..Options::default()
+        };
+        let mut db = DB::open(temp.path().join("db"), options).expect("reopen LevelDB");
+
+        let version = db
+            .get(&chunk_key(0, 0, TAG_VERSION))
+            .expect("ChunkVersion record");
+        assert_eq!(&*version, &[40u8]);
+
+        let finalized = db
+            .get(&chunk_key(0, 0, TAG_FINALIZED))
+            .expect("FinalizedState record");
+        assert_eq!(&*finalized, &2i32.to_le_bytes());
+
+        assert!(
+            db.get(&subchunk_key(0, 0, 4))
+                .expect("read subchunk key")
+                .is_some()
+        );
+    }
+}
